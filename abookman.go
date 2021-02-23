@@ -8,7 +8,7 @@ import (
 	"strings"
 	"errors"
 	"log"
-	"encoding/base64"
+	"encoding/base32"
 	// "path/filepath"
 
 	"github.com/BurntSushi/toml"
@@ -168,8 +168,11 @@ func ReadBookMarksFile(filePath string) (AmforaBookmarks, error) {
 
 func main() {
 	bookmarks, _ := ReadBookMarks()
+	fmt.Println("# Amfora Bookmarks\n")
 
-	for url, name := range bookmarks.Bookmarks {
-		fmt.Printf("%s: %s\n", name, url)
+	for encUrl, name := range bookmarks.Bookmarks {
+		decUrl, _ := base32.StdEncoding.DecodeString(strings.ToUpper(encUrl))
+		url := string(decUrl)
+		fmt.Printf("=> %s %s\n", url, name)
 	}
 }
