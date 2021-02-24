@@ -136,10 +136,10 @@ func ReadBookMarksFile(filePath string) (map[string]string, error) {
 
 	f.Close()
 
-	for encUrl, name := range rawBookmarks.Bookmarks {
+	for encUrl, description := range rawBookmarks.Bookmarks {
 		decUrl, _ := base32.StdEncoding.DecodeString(strings.ToUpper(encUrl))
 		url := string(decUrl)
-		bookmarks[name] = url
+		bookmarks[url] = description
 	}
 	
 	return bookmarks, nil
@@ -175,12 +175,29 @@ func main() {
 	if ToFormat == "gemtext" || ToFormat == "gmi" {
 		fmt.Println("# Amfora Bookmarks\n")
 
-		for name, url := range bookmarks{
-			fmt.Printf("=> %s %s\n", url, name)
+		for url, description := range bookmarks{
+			fmt.Printf("=> %s %s\n", url, description)
 		}			
 	} else if ToFormat == "yaml" || ToFormat == "yml" {
-		for name, url := range bookmarks{
-			fmt.Printf("- name: %s\n  url: %s\n", name, url)
+		fmt.Println("# Amfora Bookmarks\n")
+
+		for url, description := range bookmarks{
+			fmt.Printf("- link: %s\n  desc: %s\n", url, description)
 		}			
+	} else if ToFormat == "json" {
+		i := 0
+		fmt.Printf("[\n")
+
+		for url, description := range bookmarks {
+			if i > 0 {
+				fmt.Printf(",\n")
+			}
+
+			fmt.Printf("  { \"link\": \"%s\", \"desc\": \"%s\" }", url, description)
+
+			i += 1
+		}			
+
+		fmt.Printf("\n]\n")
 	}
 }
