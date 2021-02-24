@@ -178,26 +178,27 @@ func main() {
 		for url, description := range bookmarks{
 			fmt.Printf("=> %s %s\n", url, description)
 		}			
-	} else if ToFormat == "yaml" || ToFormat == "yml" {
-		fmt.Println("# Amfora Bookmarks\n")
-
+	} else if ToFormat == "toml" {
 		for url, description := range bookmarks{
-			fmt.Printf("- link: %s\n  desc: %s\n", url, description)
+			fmt.Printf("\"%s\" = \"%s\"\n", url, description)
+		}				
+	} else if ToFormat == "yaml" || ToFormat == "yml" {
+		for url, description := range bookmarks{
+			fmt.Printf("\"%s\": \"%s\"\n", url, description)
 		}			
 	} else if ToFormat == "json" {
 		i := 0
-		fmt.Printf("[\n")
+		fmt.Printf("{\n")
 
 		for url, description := range bookmarks {
 			if i > 0 {
 				fmt.Printf(",\n")
 			}
 
-			fmt.Printf("  { \"link\": \"%s\", \"desc\": \"%s\" }", url, description)
-
+			fmt.Printf("  \"%s\": \"%s\"", url, description)
 			i += 1
 		}			
 
-		fmt.Printf("\n]\n")
+		fmt.Printf("\n}\n")
 	}
 }

@@ -1,1 +1,4 @@
-bookmarks.toml
+*.toml
+*.json
+*.yaml
+*.gmi
