@@ -8,6 +8,7 @@ import (
 	"strings"
 	"errors"
 	"log"
+	"flag"
 	"encoding/base32"
 	// "path/filepath"
 
@@ -32,13 +33,6 @@ type Options struct {
 	Branch       string
 	DestRepoName string
 	DestRepoPath string
-}
-
-type workDirConfig struct {
-	WorkDirName string
-	Branch      string
-	DefaultRepo string
-	Repos map[string]string
 }
 
 type AmforaBookmarks struct {
@@ -148,22 +142,51 @@ func ReadBookMarks() (AmforaBookmarks, error) {
 
 // Load a project working directory configuration given
 // the project working directory configuration file path
-func ReadBookMarksFile(filePath string) (AmforaBookmarks, error) {
-	var bookmarks AmforaBookmarks
+func ReadBookMarksFile(filePath string) (map[string]string, error) {
+	var rawBookmarks AmforaBookmarks
+	var bookmarks map[string]string
 
 	f, err := os.Open(filePath)
 
 	if err != nil {
-		return AmforaBookmarks{}, errors.New("config file missing")
+		return make(map[string]string), errors.New("config file missing")
 	}
 
 	if _, err = toml.DecodeReader(f, &bookmarks); err != nil {
 		log.Fatal("Invalid configuration file " + filePath)
 	}
 
+	for encUrl, name := range bookmarks.Bookmarks {
+		decUrl, _ := base32.StdEncoding.DecodeString(strings.ToUpper(encUrl))
+		url := string(decUrl)
+		fmt.Printf("=> %s %s\n", url, name)
+	}
+	
+
 	f.Close()
 
 	return bookmarks, nil
+}
+
+// Subcommands
+// export
+// import
+// convert
+// backup
+// print
+// add
+// delete
+// modify
+
+// Parameters
+// -t --to
+// -f --from
+// -o --output
+
+var ToFormat string
+
+func init() {
+	flag.StringVarP(&ToFormat, "to", "gemtext", "set output format")
 }
 
 func main() {
