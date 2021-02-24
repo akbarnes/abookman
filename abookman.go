@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io"
+	// "io"
 	"os"
 	"path"
 	"strings"
@@ -103,31 +103,9 @@ func TimeToPath(timeStr string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(strings.ReplaceAll(timeStr, ":", "-"), "/", "-"), " ", "T")
 }
 
-// Copy the source file to a destination file. Any existing file 
-// will be overwritten and will not copy file attributes.
-func CopyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-
-	out, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	_, err = io.Copy(out, in)
-	if err != nil {
-		return err
-	}
-	return out.Close()
-}
-
 // Load a project working directory configuration given
 // the working directory path
-func ReadBookMarks() (AmforaBookmarks, error) {
+func ReadBookMarks() (map[string]string, error) {
 	// var configPath string
 
 	// if len(workDir) == 0 {
@@ -144,27 +122,26 @@ func ReadBookMarks() (AmforaBookmarks, error) {
 // the project working directory configuration file path
 func ReadBookMarksFile(filePath string) (map[string]string, error) {
 	var rawBookmarks AmforaBookmarks
-	var bookmarks map[string]string
+	bookmarks := make(map[string]string)
 
 	f, err := os.Open(filePath)
 
 	if err != nil {
-		return make(map[string]string), errors.New("config file missing")
+		return bookmarks, errors.New("config file missing")
 	}
 
-	if _, err = toml.DecodeReader(f, &bookmarks); err != nil {
+	if _, err = toml.DecodeReader(f, &rawBookmarks); err != nil {
 		log.Fatal("Invalid configuration file " + filePath)
 	}
 
-	for encUrl, name := range bookmarks.Bookmarks {
-		decUrl, _ := base32.StdEncoding.DecodeString(strings.ToUpper(encUrl))
-		url := string(decUrl)
-		fmt.Printf("=> %s %s\n", url, name)
-	}
-	
-
 	f.Close()
 
+	for encUrl, name := range rawBookmarks.Bookmarks {
+		decUrl, _ := base32.StdEncoding.DecodeString(strings.ToUpper(encUrl))
+		url := string(decUrl)
+		bookmarks[name] = url
+	}
+	
 	return bookmarks, nil
 }
 
@@ -186,16 +163,24 @@ func ReadBookMarksFile(filePath string) (map[string]string, error) {
 var ToFormat string
 
 func init() {
-	flag.StringVarP(&ToFormat, "to", "gemtext", "set output format")
+	flag.StringVar(&ToFormat, "to", "gemtext", "set output format")
 }
 
 func main() {
-	bookmarks, _ := ReadBookMarks()
-	fmt.Println("# Amfora Bookmarks\n")
+	flag.Parse()
+	ToFormat = strings.ToLower(ToFormat)
 
-	for encUrl, name := range bookmarks.Bookmarks {
-		decUrl, _ := base32.StdEncoding.DecodeString(strings.ToUpper(encUrl))
-		url := string(decUrl)
-		fmt.Printf("=> %s %s\n", url, name)
+	bookmarks, _ := ReadBookMarks()
+
+	if ToFormat == "gemtext" || ToFormat == "gmi" {
+		fmt.Println("# Amfora Bookmarks\n")
+
+		for name, url := range bookmarks{
+			fmt.Printf("=> %s %s\n", url, name)
+		}			
+	} else if ToFormat == "yaml" || ToFormat == "yml" {
+		for name, url := range bookmarks{
+			fmt.Printf("- name: %s\n  url: %s\n", name, url)
+		}			
 	}
 }
